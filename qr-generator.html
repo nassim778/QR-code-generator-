@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Code Generator - Restaurant Menu</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- QRCode library removed - using Google Charts API instead -->
+    <style>
+        .qr-generator-container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+        
+        .qr-form {
+            background: #f8f9fa;
+            padding: 2rem;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #ecf0f1;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+        
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #f39c12;
+        }
+        
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+        
+        .generate-btn {
+            background: linear-gradient(135deg, #f39c12, #e67e22);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 25px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+        
+        .generate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(243, 156, 18, 0.3);
+        }
+        
+        .qr-result {
+            text-align: center;
+            padding: 2rem;
+            background: #f8f9fa;
+            border-radius: 10px;
+            display: none;
+        }
+        
+        .qr-code {
+            margin: 1rem 0;
+        }
+        
+        .download-btn {
+            background: #27ae60;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 20px;
+            cursor: pointer;
+            margin: 0.5rem;
+            transition: all 0.3s ease;
+        }
+        
+        .download-btn:hover {
+            background: #229954;
+            transform: translateY(-2px);
+        }
+        
+        .preview-section {
+            margin-top: 2rem;
+            padding: 1.5rem;
+            background: #e8f4f8;
+            border-radius: 10px;
+        }
+        
+        .preview-section h3 {
+            color: #2c3e50;
+            margin-bottom: 1rem;
+        }
+        
+        .preview-url {
+            background: white;
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid #bdc3c7;
+            word-break: break-all;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="restaurant-info">
+                <h1 class="restaurant-name">QR Code Generator</h1>
+                <p class="restaurant-tagline">Create QR codes for your restaurant menu</p>
+            </div>
+        </header>
+
+        <div class="qr-generator-container">
+            <div class="qr-form">
+                <h2><i class="fas fa-qrcode"></i> Generate QR Code</h2>
+                <form id="qrForm">
+                    <div class="form-group">
+                        <label for="restaurantName">Restaurant Name:</label>
+                        <input type="text" id="restaurantName" value="Delicious Bites" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="menuUrl">Menu URL:</label>
+                        <input type="url" id="menuUrl" value="http://10.186.181.214:3000/menu-dynamic.html" required>
+                        <small style="color: #7f8c8d; font-size: 0.9rem; margin-top: 0.5rem; display: block;">
+                            Replace 192.168.1.100 with your computer's IP address. Find it by running "ipconfig" in Command Prompt (Windows) or "ifconfig" in Terminal (Mac/Linux).
+                        </small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="qrSize">QR Code Size:</label>
+                        <select id="qrSize" style="width: 100%; padding: 0.75rem; border: 2px solid #ecf0f1; border-radius: 8px;">
+                            <option value="200">200x200 pixels</option>
+                            <option value="300" selected>300x300 pixels</option>
+                            <option value="400">400x400 pixels</option>
+                            <option value="500">500x500 pixels</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="customMessage">Custom Message (optional):</label>
+                        <textarea id="customMessage" placeholder="Add a custom message that appears when the QR code is scanned..."></textarea>
+                    </div>
+                    
+                    <button type="submit" class="generate-btn">
+                        <i class="fas fa-magic"></i> Generate QR Code
+                    </button>
+                </form>
+            </div>
+
+            <div class="qr-result" id="qrResult">
+                <h3><i class="fas fa-check-circle"></i> QR Code Generated Successfully!</h3>
+                <div class="qr-code" id="qrCode"></div>
+                <div>
+                    <button class="download-btn" onclick="downloadQR('png')">
+                        <i class="fas fa-download"></i> Download PNG
+                    </button>
+                    <button class="download-btn" onclick="downloadQR('svg')">
+                        <i class="fas fa-download"></i> Download SVG
+                    </button>
+                </div>
+                
+                <div class="preview-section">
+                    <h3><i class="fas fa-eye"></i> Preview</h3>
+                    <p>This QR code will direct customers to:</p>
+                    <div class="preview-url" id="previewUrl"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="qr-generator-container">
+            <h2><i class="fas fa-info-circle"></i> How to Use</h2>
+            <div style="line-height: 1.8; color: #555;">
+                <ol style="padding-left: 2rem;">
+                    <li><strong>Enter your restaurant details:</strong> Update the restaurant name and menu URL to match your actual information.</li>
+                    <li><strong>Generate the QR code:</strong> Click the "Generate QR Code" button to create your QR code.</li>
+                    <li><strong>Download and print:</strong> Download the QR code in your preferred format (PNG or SVG) and print it for your tables.</li>
+                    <li><strong>Place strategically:</strong> Put the QR codes on table tents, menus, or wall displays where customers can easily scan them.</li>
+                </ol>
+                
+                <h3 style="margin-top: 2rem; color: #2c3e50;">Tips for Success:</h3>
+                <ul style="padding-left: 2rem;">
+                    <li>Make sure your menu URL is accessible and mobile-friendly</li>
+                    <li>Test the QR code with different devices before printing</li>
+                    <li>Use high-quality printing for better scanning results</li>
+                    <li>Consider adding instructions like "Scan to view menu"</li>
+                </ul>
+            </div>
+        </div>
+
+        <footer class="footer">
+            <p>&copy; 2024 Restaurant QR Menu System. All rights reserved.</p>
+            <p><a href="index.html" style="color: #f39c12;">← Back to Menu</a></p>
+        </footer>
+    </div>
+
+    <script>
+        let currentQRCode = null;
+
+        document.getElementById('qrForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            generateQRCode();
+        });
+
+        function generateQRCode() {
+            console.log('Generate QR Code button clicked');
+            
+            const restaurantName = document.getElementById('restaurantName').value;
+            const menuUrl = document.getElementById('menuUrl').value;
+            const qrSize = parseInt(document.getElementById('qrSize').value);
+            const customMessage = document.getElementById('customMessage').value;
+
+            console.log('Form data:', { restaurantName, menuUrl, qrSize, customMessage });
+
+            // Validate inputs
+            if (!menuUrl) {
+                alert('Please enter a menu URL');
+                return;
+            }
+
+            // Create the QR code data
+            let qrData = menuUrl;
+            if (customMessage) {
+                qrData = `${customMessage}\n\n${menuUrl}`;
+            }
+
+            // Clear previous QR code
+            const qrCodeDiv = document.getElementById('qrCode');
+            qrCodeDiv.innerHTML = '';
+
+            // Show loading message
+            qrCodeDiv.innerHTML = '<p>Generating QR Code...</p>';
+
+            // Check if QRCode library is available
+            console.log('QRCode library available:', typeof QRCode !== 'undefined');
+            
+            // Always use fallback method for now since QRCode library isn't loading
+            console.log('Using Google Charts fallback (QRCode library not available)');
+            generateQRCodeFallback(qrData, qrSize);
+        }
+
+        function generateQRCodeFallback(qrData, qrSize) {
+            console.log('Using simple QR code generation');
+            const qrCodeDiv = document.getElementById('qrCode');
+            const menuUrl = document.getElementById('menuUrl').value;
+            
+            // Create a simple QR code using a different service
+            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=${qrSize}x${qrSize}&data=${encodeURIComponent(qrData)}`;
+            console.log('QR URL:', qrUrl);
+            
+            const img = document.createElement('img');
+            img.src = qrUrl;
+            img.alt = 'QR Code';
+            img.style.maxWidth = '100%';
+            img.style.height = 'auto';
+            img.style.border = '1px solid #ddd';
+            img.style.borderRadius = '8px';
+            
+            img.onload = function() {
+                console.log('QR Code image loaded successfully');
+                // Create a canvas for download functionality
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = qrSize;
+                canvas.height = qrSize;
+                
+                ctx.drawImage(img, 0, 0, qrSize, qrSize);
+                currentQRCode = canvas;
+                
+                document.getElementById('qrResult').style.display = 'block';
+                document.getElementById('previewUrl').textContent = menuUrl;
+                
+                // Scroll to result
+                document.getElementById('qrResult').scrollIntoView({ 
+                    behavior: 'smooth' 
+                });
+            };
+            
+            img.onerror = function() {
+                console.error('Failed to load QR code image, trying alternative method');
+                // Try alternative QR service
+                const altQrUrl = `https://quickchart.io/qr?text=${encodeURIComponent(qrData)}&size=${qrSize}`;
+                console.log('Trying alternative QR URL:', altQrUrl);
+                
+                const altImg = document.createElement('img');
+                altImg.src = altQrUrl;
+                altImg.alt = 'QR Code';
+                altImg.style.maxWidth = '100%';
+                altImg.style.height = 'auto';
+                altImg.style.border = '1px solid #ddd';
+                altImg.style.borderRadius = '8px';
+                
+                altImg.onload = function() {
+                    console.log('Alternative QR Code loaded successfully');
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    canvas.width = qrSize;
+                    canvas.height = qrSize;
+                    
+                    ctx.drawImage(altImg, 0, 0, qrSize, qrSize);
+                    currentQRCode = canvas;
+                    
+                    document.getElementById('qrResult').style.display = 'block';
+                    document.getElementById('previewUrl').textContent = menuUrl;
+                    
+                    document.getElementById('qrResult').scrollIntoView({ 
+                        behavior: 'smooth' 
+                    });
+                };
+                
+                altImg.onerror = function() {
+                    console.error('All QR services failed');
+                    qrCodeDiv.innerHTML = `
+                        <div style="text-align: center; padding: 2rem; border: 2px dashed #ccc; border-radius: 8px;">
+                            <h3 style="color: #e74c3c;">QR Code Generation Failed</h3>
+                            <p>Unable to generate QR code due to network restrictions.</p>
+                            <p><strong>Manual Solution:</strong></p>
+                            <p>Copy this URL and use any online QR generator:</p>
+                            <div style="background: #f8f9fa; padding: 1rem; border-radius: 4px; margin: 1rem 0; word-break: break-all; font-family: monospace;">
+                                ${menuUrl}
+                            </div>
+                            <p>Or try these free QR generators:</p>
+                            <ul style="text-align: left; display: inline-block;">
+                                <li><a href="https://www.qr-code-generator.com/" target="_blank">QR-Code-Generator.com</a></li>
+                                <li><a href="https://qr-generator.com/" target="_blank">QR-Generator.com</a></li>
+                            </ul>
+                        </div>
+                    `;
+                };
+                
+                qrCodeDiv.appendChild(altImg);
+            };
+            
+            qrCodeDiv.appendChild(img);
+        }
+
+        function downloadQR(format) {
+            if (!currentQRCode) {
+                alert('Please generate a QR code first.');
+                return;
+            }
+
+            const restaurantName = document.getElementById('restaurantName').value;
+            const filename = `${restaurantName.replace(/\s+/g, '_')}_Menu_QR.${format}`;
+
+            if (format === 'png') {
+                // Download as PNG
+                const link = document.createElement('a');
+                link.download = filename;
+                link.href = currentQRCode.toDataURL();
+                link.click();
+            } else if (format === 'svg') {
+                // Generate SVG version
+                const qrData = document.getElementById('menuUrl').value;
+                const customMessage = document.getElementById('customMessage').value;
+                let data = qrData;
+                if (customMessage) {
+                    data = `${customMessage}\n\n${qrData}`;
+                }
+
+                // Always use fallback since QRCode library is not available
+                downloadSVGFallback(data);
+            }
+        }
+
+        function downloadSVGFallback(qrData) {
+            const restaurantName = document.getElementById('restaurantName').value;
+            const filename = `${restaurantName.replace(/\s+/g, '_')}_Menu_QR.png`;
+            
+            // Use the same QR service for download
+            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(qrData)}`;
+            
+            // Download the image
+            const link = document.createElement('a');
+            link.download = filename;
+            link.href = qrUrl;
+            link.click();
+        }
+
+        // Auto-detect local IP and update URL field
+        async function getLocalIP() {
+            try {
+                const pc = new RTCPeerConnection({
+                    iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+                });
+                
+                pc.createDataChannel('');
+                const offer = await pc.createOffer();
+                await pc.setLocalDescription(offer);
+                
+                return new Promise((resolve) => {
+                    pc.onicecandidate = (event) => {
+                        if (event.candidate) {
+                            const candidate = event.candidate.candidate;
+                            const ipMatch = candidate.match(/([0-9]{1,3}(\.[0-9]{1,3}){3})/);
+                            if (ipMatch) {
+                                const ip = ipMatch[1];
+                                if (ip.startsWith('192.168.') || ip.startsWith('10.') || ip.startsWith('172.')) {
+                                    resolve(ip);
+                                }
+                            }
+                        }
+                    };
+                    
+                    setTimeout(() => {
+                        resolve('192.168.1.100');
+                    }, 3000);
+                });
+            } catch (error) {
+                return '192.168.1.100';
+            }
+        }
+
+
+        // Auto-generate QR code on page load with default values
+        window.addEventListener('load', async function() {
+            console.log('Page loaded, initializing...');
+            
+            // Check if URL parameter is provided
+            const urlParams = new URLSearchParams(window.location.search);
+            const urlParam = urlParams.get('url');
+            
+            if (urlParam) {
+                document.getElementById('menuUrl').value = urlParam;
+            } else {
+                // Auto-detect local IP
+                const ip = await getLocalIP();
+                document.getElementById('menuUrl').value = `http://${ip}:8000`;
+            }
+            
+            console.log('Initialization complete');
+        });
+    </script>
+</body>
+</html>
